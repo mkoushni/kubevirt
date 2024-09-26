@@ -530,7 +530,7 @@ var _ = Describe("[rfe_id:273][crit:high][vendor:cnv-qe@redhat.com][level:compon
 
 				// Crash the VirtualMachineInstance and verify a recovered version of virt-handler processes the crash
 				By("Killing the VirtualMachineInstance")
-				err = pkillAllVMIs(kubevirt.Client(), nodeName)
+				err = pkillVMI(kubevirt.Client(), vmi)
 				Expect(err).ToNot(HaveOccurred(), "Should kill VMI successfully")
 
 				// Give virt-handler some time. It can greatly vary when virt-handler will be ready again
@@ -1805,12 +1805,10 @@ var _ = Describe("[rfe_id:273][crit:high][vendor:cnv-qe@redhat.com][level:compon
 			obj, err := kubevirt.Client().VirtualMachineInstance(testsuite.GetTestNamespace(vmi)).Create(context.Background(), vmi, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Should create VMI")
 
-			nodeName := libwait.WaitForSuccessfulVMIStart(obj).Status.NodeName
+			libwait.WaitForSuccessfulVMIStart(obj)
 
 			By("Killing the VirtualMachineInstance")
-			time.Sleep(10 * time.Second)
-			err = pkillAllVMIs(kubevirt.Client(), nodeName)
-			Expect(err).ToNot(HaveOccurred(), "Should deploy helper pod to kill VMI")
+			Expect(pkillVMI(kubevirt.Client(), vmi)).To(Succeed(), "Should deploy helper pod to kill VMI")
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -1831,11 +1829,10 @@ var _ = Describe("[rfe_id:273][crit:high][vendor:cnv-qe@redhat.com][level:compon
 			obj, err := kubevirt.Client().VirtualMachineInstance(testsuite.GetTestNamespace(vmi)).Create(context.Background(), vmi, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Should create VMI")
 
-			nodeName := libwait.WaitForSuccessfulVMIStart(obj).Status.NodeName
+			libwait.WaitForSuccessfulVMIStart(obj)
 
 			By("Killing the VirtualMachineInstance")
-			err = pkillAllVMIs(kubevirt.Client(), nodeName)
-			Expect(err).ToNot(HaveOccurred(), "Should create kill pod to kill all VMs")
+			Expect(pkillVMI(kubevirt.Client(), vmi)).To(Succeed(), "Should deploy helper pod to kill VMI")
 
 			// Wait for stop event of the VirtualMachineInstance
 			ctx, cancel := context.WithCancel(context.Background())
@@ -1929,8 +1926,8 @@ var _ = Describe("[rfe_id:273][crit:high][vendor:cnv-qe@redhat.com][level:compon
 	})
 })
 
-func renderPkillAllPod(processName string) *k8sv1.Pod {
-	return libpod.RenderPrivilegedPod("vmi-killer", []string{"pkill"}, []string{"-9", processName})
+func renderPkillAllPod(processName ...string) *k8sv1.Pod {
+	return libpod.RenderPrivilegedPod("vmi-killer", []string{"pkill"}, processName)
 }
 
 func getVirtLauncherLogs(virtCli kubecli.KubevirtClient, vmi *v1.VirtualMachineInstance) string {
@@ -1985,11 +1982,14 @@ func pkillAllLaunchers(virtCli kubecli.KubevirtClient, node string) (*k8sv1.Pod,
 	return virtCli.CoreV1().Pods(testsuite.GetTestNamespace(pod)).Create(context.Background(), pod, metav1.CreateOptions{})
 }
 
-func pkillAllVMIs(virtCli kubecli.KubevirtClient, node string) error {
-	pod := renderPkillAllPod("qemu")
+func pkillVMI(client kubecli.KubevirtClient, vmi *v1.VirtualMachineInstance) error {
+	pod := renderPkillAllPod("-9", "-f", string(vmi.UID))
+	node := vmi.Status.NodeName
+	if node == "" {
+		return fmt.Errorf("VMI %s was not scheduled yet", node)
+	}
 	pod.Spec.NodeName = node
-	_, err := virtCli.CoreV1().Pods(testsuite.GetTestNamespace(pod)).Create(context.Background(), pod, metav1.CreateOptions{})
-
+	_, err := client.CoreV1().Pods(testsuite.GetTestNamespace(pod)).Create(context.Background(), pod, metav1.CreateOptions{})
 	return err
 }
 
