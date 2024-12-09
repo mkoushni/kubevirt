@@ -9,13 +9,14 @@ import (
 	"path/filepath"
 
 	"github.com/povsister/scp"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"kubevirt.io/kubevirt/pkg/virtctl/ssh"
 )
 
-func (o *SCP) nativeSCP(local LocalArgument, remote RemoteArgument, toRemote bool) error {
+func (o *SCP) nativeSCP(local LocalArgument, remote RemoteArgument, toRemote bool, clientConfig clientcmd.ClientConfig) error {
 	sshClient := ssh.NativeSSHConnection{
-		ClientConfig: o.clientConfig,
+		ClientConfig: clientConfig,
 		Options:      o.options,
 	}
 	client, err := sshClient.PrepareSSHClient(remote.Kind, remote.Namespace, remote.Name)
