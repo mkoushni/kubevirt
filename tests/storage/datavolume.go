@@ -759,6 +759,33 @@ var _ = SIGDescribe("DataVolume Integration", func() {
 				// Wait for the owner reference to disappear
 				Eventually(ThisDVWith(vm.Namespace, vm.Spec.DataVolumeTemplates[0].Name), 100).Should(Not(BeOwned()))
 			})
+
+			It("[test_id:XXXX]should fail creating a VMI with ExceededQuota status and Failure condition when using ResourceQuota storage limits", func() {
+				sc, exists := libstorage.GetRWOFileSystemStorageClass()
+				if !exists {
+					Fail("Fail test when Filesystem storage is not present")
+				}
+
+				By("Creating a Resource Quota with storage limits")
+				rq := &k8sv1.ResourceQuota{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-quota",
+					},
+					Spec: k8sv1.ResourceQuotaSpec{
+						Hard: k8sv1.ResourceList{
+							k8sv1.ResourceRequestsStorage: resource.MustParse("256Mi"),
+						},
+					},
+				}
+				_, err := virtClient.CoreV1().ResourceQuotas(testsuite.GetTestNamespace(nil)).Create(context.Background(), rq, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+
+				vm := renderVMWithRegistryImportDataVolume(cd.ContainerDiskAlpine, sc)
+				vm, err = virtClient.VirtualMachine(testsuite.GetTestNamespace(nil)).Create(context.Background(), vm, metav1.CreateOptions{})
+				Expect(err).ToNot(HaveOccurred())
+
+				Eventually(ThisVM(vm), 10*time.Second, 1*time.Second).Should(HaveConditionTrueWithMessage(v1.VirtualMachineFailure, "forbidden: exceeded quota"))
+			})
 		})
 	})
 

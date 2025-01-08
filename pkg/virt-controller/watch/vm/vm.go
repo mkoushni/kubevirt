@@ -517,6 +517,14 @@ func (c *Controller) handleDataVolumes(vm *virtv1.VirtualMachine) (bool, error) 
 		} else if curDataVolume.Status.Phase != cdiv1.Succeeded &&
 			curDataVolume.Status.Phase != cdiv1.WaitForFirstConsumer &&
 			curDataVolume.Status.Phase != cdiv1.PendingPopulation {
+
+			if curDataVolume.Status.Phase == cdiv1.Pending {
+				err := storagetypes.HasDataVolumeExceededQuota(vm.Namespace, vm.Spec.Template.Spec.Volumes, c.dataVolumeStore)
+				if err != nil {
+					return false, err
+				}
+			}
+
 			// ready = false because encountered DataVolume that is not populated yet
 			ready = false
 			if curDataVolume.Status.Phase == cdiv1.Failed {
@@ -2638,6 +2646,7 @@ func (c *Controller) setPrintableStatus(vm *virtv1.VirtualMachine, vmi *virtv1.V
 		{virtv1.VirtualMachineStatusRunning, c.isVirtualMachineStatusRunning},
 		{virtv1.VirtualMachineStatusPvcNotFound, c.isVirtualMachineStatusPvcNotFound},
 		{virtv1.VirtualMachineStatusDataVolumeError, c.isVirtualMachineStatusDataVolumeError},
+		{virtv1.VirtualMachineStatusDataVolumeExceededQuota, c.isVirtualMachineStatusDataVolumeExceededQuota},
 		{virtv1.VirtualMachineStatusUnschedulable, c.isVirtualMachineStatusUnschedulable},
 		{virtv1.VirtualMachineStatusProvisioning, c.isVirtualMachineStatusProvisioning},
 		{virtv1.VirtualMachineStatusWaitingForVolumeBinding, c.isVirtualMachineStatusWaitingForVolumeBinding},
@@ -2784,6 +2793,16 @@ func (c *Controller) isVirtualMachineStatusPvcNotFound(vm *virtv1.VirtualMachine
 // isVirtualMachineStatusDataVolumeError determines whether the VM status field should be set to "DataVolumeError"
 func (c *Controller) isVirtualMachineStatusDataVolumeError(vm *virtv1.VirtualMachine, vmi *virtv1.VirtualMachineInstance) bool {
 	err := storagetypes.HasDataVolumeErrors(vm.Namespace, vm.Spec.Template.Spec.Volumes, c.dataVolumeStore)
+	if err != nil {
+		log.Log.Object(vm).Errorf("%v", err)
+		return true
+	}
+	return false
+}
+
+// isVirtualMachineStatusDataVolumeError determines whether the VM status field should be set to "DataVolumeExceededQuota"
+func (c *Controller) isVirtualMachineStatusDataVolumeExceededQuota(vm *virtv1.VirtualMachine, vmi *virtv1.VirtualMachineInstance) bool {
+	err := storagetypes.HasDataVolumeExceededQuota(vm.Namespace, vm.Spec.Template.Spec.Volumes, c.dataVolumeStore)
 	if err != nil {
 		log.Log.Object(vm).Errorf("%v", err)
 		return true
