@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright 2023 Red Hat, Inc.
+ * Copyright 2024 The KubeVirt Authors.
  *
  */
 
-package instancetype
+package controllers_test
 
-const VMFieldsConflictsErrorFmt = "VM fields %s conflict with selected instance type"
+import (
+	"testing"
 
-type IgnoreableInferenceError struct {
-	err error
-}
+	"kubevirt.io/client-go/testutils"
+)
 
-func (e *IgnoreableInferenceError) Error() string {
-	return e.err.Error()
-}
-
-func (e *IgnoreableInferenceError) Unwrap() error {
-	return e.err
-}
-
-func NewIgnoreableInferenceError(err error) error {
-	return &IgnoreableInferenceError{err: err}
+func TestControllers(t *testing.T) {
+	testutils.KubeVirtTestSuiteSetup(t)
 }

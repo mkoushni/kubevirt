@@ -17,7 +17,7 @@
  *
  */
 
-package vmicontroller
+package controllers
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ import (
 	"kubevirt.io/kubevirt/pkg/network/vmispec"
 )
 
-func UpdateStatus(vmi *v1.VirtualMachineInstance, pod *k8scorev1.Pod) error {
+func UpdateVMIStatus(vmi *v1.VirtualMachineInstance, pod *k8scorev1.Pod) error {
 	var interfaceStatuses []v1.VirtualMachineInstanceNetworkInterface
 
 	networkStatuses := multus.NetworkStatusesFromPod(pod)
@@ -99,16 +99,19 @@ func calculateSecondaryIfaceStatuses(
 		switch {
 		case exists && vmiIfaceStatus == nil:
 			interfaceStatuses = append(interfaceStatuses, v1.VirtualMachineInstanceNetworkInterface{
-				Name:       network.Name,
-				InfoSource: vmispec.InfoSourceMultusStatus,
+				Name:             network.Name,
+				InfoSource:       vmispec.InfoSourceMultusStatus,
+				PodInterfaceName: podIfaceName,
 			})
 		case exists && vmiIfaceStatus != nil:
 			updatedIfaceStatus := *vmiIfaceStatus
 			updatedIfaceStatus.InfoSource = vmispec.AddInfoSource(updatedIfaceStatus.InfoSource, vmispec.InfoSourceMultusStatus)
+			updatedIfaceStatus.PodInterfaceName = podIfaceName
 			interfaceStatuses = append(interfaceStatuses, updatedIfaceStatus)
 		case !exists && vmiIfaceStatus != nil:
 			updatedIfaceStatus := *vmiIfaceStatus
 			updatedIfaceStatus.InfoSource = vmispec.RemoveInfoSource(updatedIfaceStatus.InfoSource, vmispec.InfoSourceMultusStatus)
+			updatedIfaceStatus.PodInterfaceName = podIfaceName
 			interfaceStatuses = append(interfaceStatuses, updatedIfaceStatus)
 		}
 	}

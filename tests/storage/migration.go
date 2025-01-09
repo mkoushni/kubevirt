@@ -68,7 +68,6 @@ import (
 var _ = SIGDescribe("Volumes update with migration", decorators.RequiresTwoSchedulableNodes, decorators.VMLiveUpdateRolloutStrategy, Serial, func() {
 	var virtClient kubecli.KubevirtClient
 	BeforeEach(func() {
-		checks.SkipIfMigrationIsNotPossible()
 		virtClient = kubevirt.Client()
 		originalKv := libkubevirt.GetCurrentKv(virtClient)
 		updateStrategy := &virtv1.KubeVirtWorkloadUpdateStrategy{
@@ -294,7 +293,7 @@ var _ = SIGDescribe("Volumes update with migration", decorators.RequiresTwoSched
 			waitForMigrationToSucceed(virtClient, vm.Name, ns)
 		})
 
-		It("should migrate the source volume from a source and destination block RWX DVs", decorators.RequiresRWXBlock, func() {
+		It("should migrate the source volume from a source and destination block RWX DVs", decorators.StorageCritical, decorators.RequiresRWXBlock, func() {
 			volName := "disk0"
 			sc, exist := libstorage.GetRWXBlockStorageClass()
 			Expect(exist).To(BeTrue())

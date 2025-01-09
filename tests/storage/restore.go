@@ -535,7 +535,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 					return r
 				}
 
-				It("with changed name and MAC address", func() {
+				It("with changed name and MAC address", decorators.StorageCritical, func() {
 					By("Creating a VM restore with patches to change name and MAC address")
 					restore.Spec.Patches = []string{getMacAddressCloningPatch(vm)}
 					restore, err = virtClient.VirtualMachineRestore(vm.Namespace).Create(context.Background(), restore, metav1.CreateOptions{})
@@ -581,7 +581,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 
 			})
 		})
-		Context("with instancetype and preferences", func() {
+		Context("with instancetype and preferences", decorators.RequiresSnapshotStorageClass, func() {
 			var (
 				instancetype *instancetypev1beta1.VirtualMachineInstancetype
 				preference   *instancetypev1beta1.VirtualMachinePreference
@@ -594,7 +594,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				if snapshotStorageClass == "" {
-					Skip("Skiping test, no VolumeSnapshot support")
+					Fail("Failing test, no VolumeSnapshot support")
 				}
 
 				instancetype = &instancetypev1beta1.VirtualMachineInstancetype{
@@ -640,7 +640,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				}
 			})
 
-			DescribeTable("should use existing ControllerRevisions for an existing VM restore", Label("instancetype", "preference", "restore"), func(runStrategy v1.VirtualMachineRunStrategy) {
+			DescribeTable("should use existing ControllerRevisions for an existing VM restore", decorators.StorageCritical, Label("instancetype", "preference", "restore"), func(runStrategy v1.VirtualMachineRunStrategy) {
 				libvmi.WithRunStrategy(runStrategy)(vm)
 				vm, err := virtClient.VirtualMachine(testsuite.GetTestNamespace(vm)).Create(context.Background(), vm, metav1.CreateOptions{})
 				Expect(err).ToNot(HaveOccurred())
@@ -683,7 +683,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Entry("with a stopped VM", v1.RunStrategyHalted),
 			)
 
-			DescribeTable("should create new ControllerRevisions for newly restored VM", Label("instancetype", "preference", "restore"), func(runStrategy v1.VirtualMachineRunStrategy) {
+			DescribeTable("should create new ControllerRevisions for newly restored VM", decorators.StorageCritical, Label("instancetype", "preference", "restore"), func(runStrategy v1.VirtualMachineRunStrategy) {
 				libvmi.WithRunStrategy(runStrategy)(vm)
 				vm, err := virtClient.VirtualMachine(testsuite.GetTestNamespace(vm)).Create(context.Background(), vm, metav1.CreateOptions{})
 				Expect(err).ToNot(HaveOccurred())
@@ -731,7 +731,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 	})
 
 	Context("[storage-req]", decorators.StorageReq, func() {
-		Context("With a more complicated VM", func() {
+		Context("With a more complicated VM", decorators.RequiresSnapshotStorageClass, func() {
 			var (
 				newVmName            string
 				vm                   *v1.VirtualMachine
@@ -748,7 +748,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				if sc == "" {
-					Skip("Skiping test, no VolumeSnapshot support")
+					Fail("Failing test, no VolumeSnapshot support")
 				}
 
 				snapshotStorageClass = sc
@@ -1199,7 +1199,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Entry("to a new VM", true),
 			)
 
-			DescribeTable("should restore a vm that boots from a datavolumetemplate", func(restoreToNewVM bool) {
+			DescribeTable("should restore a vm that boots from a datavolumetemplate", decorators.StorageCritical, func(restoreToNewVM bool) {
 				vm, vmi = createAndStartVM(createVMWithCloudInit(cd.ContainerDiskCirros, snapshotStorageClass))
 
 				originalDVName := vm.Spec.DataVolumeTemplates[0].Name
@@ -1466,7 +1466,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Entry("and allow it to start after vmrestore deletion", "deleteRestore"),
 			)
 
-			DescribeTable("should restore a vm from an online snapshot", func(restoreToNewVM bool) {
+			DescribeTable("should restore a vm from an online snapshot", decorators.StorageCritical, func(restoreToNewVM bool) {
 				vm = createVMWithCloudInit(cd.ContainerDiskCirros, snapshotStorageClass)
 				vm.Spec.Template.Spec.Domain.Firmware = &v1.Firmware{}
 				vm, vmi = createAndStartVM(vm)
@@ -1555,7 +1555,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 				Entry("to a new VM", true),
 			)
 
-			DescribeTable("should restore an online vm snapshot that boots from a datavolumetemplate with guest agent", func(restoreToNewVM bool) {
+			DescribeTable("should restore an online vm snapshot that boots from a datavolumetemplate with guest agent", decorators.StorageCritical, func(restoreToNewVM bool) {
 				vm, vmi = createAndStartVM(createVMWithCloudInit(cd.ContainerDiskFedoraTestTooling, snapshotStorageClass, libvmi.WithResourceMemory("512Mi")))
 				Eventually(matcher.ThisVMI(vmi), 12*time.Minute, 2*time.Second).Should(matcher.HaveConditionTrue(v1.VirtualMachineInstanceAgentConnected))
 				Expect(console.LoginToFedora(vmi)).To(Succeed())
@@ -1681,9 +1681,7 @@ var _ = SIGDescribe("VirtualMachineRestore Tests", func() {
 					memoryDumpPVC.Spec.VolumeMode = &volumeMode
 					var err error
 					memoryDumpPVC, err = virtClient.CoreV1().PersistentVolumeClaims(testsuite.GetTestNamespace(nil)).Create(context.Background(), memoryDumpPVC, metav1.CreateOptions{})
-					if err != nil {
-						Skip(fmt.Sprintf("Skiping test, no filesystem pvc available, err: %s", err))
-					}
+					Expect(err).ToNot(HaveOccurred())
 				})
 
 				AfterEach(func() {

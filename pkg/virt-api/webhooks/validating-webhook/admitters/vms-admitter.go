@@ -290,7 +290,7 @@ func (admitter *VMsAdmitter) applyInstancetypeToVm(vm *v1.VirtualMachine) (*inst
 	for _, conflict := range conflicts {
 		causes = append(causes, metav1.StatusCause{
 			Type:    metav1.CauseTypeFieldValueInvalid,
-			Message: fmt.Sprintf(instancetype.VMFieldConflictErrorFmt, conflict.String()),
+			Message: conflict.Error(),
 			Field:   conflict.String(),
 		})
 	}
@@ -425,7 +425,8 @@ func validateDataVolume(field *k8sfield.Path, dataVolume v1.DataVolumeTemplateSp
 		}}
 	}
 
-	if dataVolume.Spec.Source == nil && dataVolume.Spec.SourceRef == nil {
+	if (dataSourceRef == nil && dataSource == nil) &&
+		(dataVolume.Spec.Source == nil && dataVolume.Spec.SourceRef == nil) {
 		return []metav1.StatusCause{{
 			Type:    metav1.CauseTypeFieldValueInvalid,
 			Message: "Data volume should have either Source, SourceRef, or be externally populated",

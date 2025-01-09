@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright 2024 The KubeVirt Authors.
+ * Copyright 2023 Red Hat, Inc.
  *
  */
 
-package vmicontroller_test
+package infer
 
-import (
-	"testing"
+type IgnoreableInferenceError struct {
+	err error
+}
 
-	"kubevirt.io/client-go/testutils"
-)
+func (e *IgnoreableInferenceError) Error() string {
+	return e.err.Error()
+}
 
-func TestVMIController(t *testing.T) {
-	testutils.KubeVirtTestSuiteSetup(t)
+func (e *IgnoreableInferenceError) Unwrap() error {
+	return e.err
+}
+
+func NewIgnoreableInferenceError(err error) error {
+	return &IgnoreableInferenceError{err: err}
 }

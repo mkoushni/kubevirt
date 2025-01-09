@@ -151,7 +151,6 @@ type templateService struct {
 	exporterImage              string
 	launcherQemuTimeout        int
 	virtShareDir               string
-	virtLibDir                 string
 	ephemeralDiskDir           string
 	containerDiskDir           string
 	hotplugDiskDir             string
@@ -1239,7 +1238,6 @@ type templateServiceOption func(*templateService)
 func NewTemplateService(launcherImage string,
 	launcherQemuTimeout int,
 	virtShareDir string,
-	virtLibDir string,
 	ephemeralDiskDir string,
 	containerDiskDir string,
 	hotplugDiskDir string,
@@ -1260,7 +1258,6 @@ func NewTemplateService(launcherImage string,
 		launcherImage:              launcherImage,
 		launcherQemuTimeout:        launcherQemuTimeout,
 		virtShareDir:               virtShareDir,
-		virtLibDir:                 virtLibDir,
 		ephemeralDiskDir:           ephemeralDiskDir,
 		containerDiskDir:           containerDiskDir,
 		hotplugDiskDir:             hotplugDiskDir,
@@ -1476,10 +1473,17 @@ func (t *templateService) VMIResourcePredicates(vmi *v1.VirtualMachineInstance, 
 
 	metrics.SetVmiLaucherMemoryOverhead(vmi, memoryOverhead)
 	withCPULimits := t.doesVMIRequireAutoCPULimits(vmi)
+	additionalCPUs := uint32(0)
+	if vmi.Spec.Domain.IOThreadsPolicy != nil &&
+		*vmi.Spec.Domain.IOThreadsPolicy == v1.IOThreadsPolicySupplementalPool &&
+		vmi.Spec.Domain.IOThreads != nil &&
+		vmi.Spec.Domain.IOThreads.SupplementalPoolThreadCount != nil {
+		additionalCPUs = *vmi.Spec.Domain.IOThreads.SupplementalPoolThreadCount
+	}
 	return VMIResourcePredicates{
 		vmi: vmi,
 		resourceRules: []VMIResourceRule{
-			NewVMIResourceRule(doesVMIRequireDedicatedCPU, WithCPUPinning(vmi.Spec.Domain.CPU, vmi.Annotations)),
+			NewVMIResourceRule(doesVMIRequireDedicatedCPU, WithCPUPinning(vmi.Spec.Domain.CPU, vmi.Annotations, additionalCPUs)),
 			NewVMIResourceRule(not(doesVMIRequireDedicatedCPU), WithoutDedicatedCPU(vmi.Spec.Domain.CPU, t.clusterConfig.GetCPUAllocationRatio(), withCPULimits)),
 			NewVMIResourceRule(util.HasHugePages, WithHugePages(vmi.Spec.Domain.Memory, memoryOverhead)),
 			NewVMIResourceRule(not(util.HasHugePages), WithMemoryOverhead(vmi.Spec.Domain.Resources, memoryOverhead)),
@@ -1491,6 +1495,7 @@ func (t *templateService) VMIResourcePredicates(vmi *v1.VirtualMachineInstance, 
 			NewVMIResourceRule(util.IsHostDevVMI, WithHostDevices(vmi.Spec.Domain.Devices.HostDevices)),
 			NewVMIResourceRule(util.IsSEVVMI, WithSEV()),
 			NewVMIResourceRule(reservation.HasVMIPersistentReservation, WithPersistentReservation()),
+			NewVMIResourceRule(doesVMIRequireCPUForIOThreads, WithIOThreads(vmi.Spec.Domain.IOThreads)),
 		},
 	}
 }

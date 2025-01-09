@@ -237,11 +237,11 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 			}
 		}
 
-		It("[test_id:4609]should successfully create a snapshot", func() {
+		It("[test_id:4609]should successfully create a snapshot", decorators.StorageCritical, func() {
 			createAndVerifyVMSnapshot(vm)
 		})
 
-		It("[test_id:4610]create a snapshot when VM is running should succeed", func() {
+		It("[test_id:4610]create a snapshot when VM is running should succeed", decorators.StorageCritical, func() {
 			patch, err := patch.New(patch.WithReplace("/spec/runStrategy", v1.RunStrategyAlways)).GeneratePayload()
 			Expect(err).ToNot(HaveOccurred())
 
@@ -288,7 +288,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 		})
 	})
 
-	Context("[storage-req]", decorators.StorageReq, func() {
+	Context("[storage-req]", decorators.StorageReq, decorators.RequiresSnapshotStorageClass, func() {
 		var (
 			snapshotStorageClass string
 		)
@@ -298,7 +298,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			if sc == "" {
-				Skip("Skiping test, no VolumeSnapshot support")
+				Fail("Failing test, no VolumeSnapshot support")
 			}
 
 			snapshotStorageClass = sc
@@ -383,7 +383,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 				return exec.ExecuteCommandOnPodWithResults(pod, pod.Annotations[annoContainer], commandSlice)
 			}
 
-			It("[test_id:6767]with volumes and guest agent available", func() {
+			It("[test_id:6767]with volumes and guest agent available", decorators.StorageCritical, func() {
 				quantity, err := resource.ParseQuantity("1Gi")
 				Expect(err).ToNot(HaveOccurred())
 				vmi := libvmifact.NewFedora(libnet.WithMasqueradeNetworking())
@@ -453,7 +453,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 				checkContentSourceAndMemory(vm.DeepCopy(), contentName, initialMemory)
 			})
 
-			It("[test_id:6768]with volumes and no guest agent available", func() {
+			It("[test_id:6768]with volumes and no guest agent available", decorators.StorageCritical, func() {
 				quantity, err := resource.ParseQuantity("1Gi")
 				Expect(err).ToNot(HaveOccurred())
 				vmi := libvmifact.NewFedora(libnet.WithMasqueradeNetworking())
@@ -880,9 +880,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 					memoryDumpPVC.Spec.VolumeMode = &volumeMode
 					var err error
 					memoryDumpPVC, err = virtClient.CoreV1().PersistentVolumeClaims(testsuite.GetTestNamespace(nil)).Create(context.Background(), memoryDumpPVC, metav1.CreateOptions{})
-					if err != nil {
-						Skip(fmt.Sprintf("Skiping test, no filesystem pvc available, err: %s", err))
-					}
+					Expect(err).ToNot(HaveOccurred())
 				})
 
 				AfterEach(func() {
@@ -1001,7 +999,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 				}
 			})
 
-			It("[test_id:4611] should successfully create a snapshot", func() {
+			It("[test_id:4611] should successfully create a snapshot", decorators.StorageCritical, func() {
 				snapshot = libstorage.NewSnapshot(vm.Name, vm.Namespace)
 
 				_, err = virtClient.VirtualMachineSnapshot(snapshot.Namespace).Create(context.Background(), snapshot, metav1.CreateOptions{})
@@ -1363,7 +1361,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 		Context("with independent DataVolume", func() {
 			var dv *cdiv1.DataVolume
 
-			DescribeTable("should accurately report DataVolume provisioning", func(storageOptFun func(string, string) libvmi.Option, memory string) {
+			DescribeTable("should accurately report DataVolume provisioning", func(storageOptFun func(string, string, ...libvmi.DiskOption) libvmi.Option, memory string) {
 				dataVolume := libdv.NewDataVolume(
 					libdv.WithRegistryURLSourceAndPullMethod(cd.DataVolumeImportUrlForContainerDisk(cd.ContainerDiskAlpine), cdiv1.RegistryPullNode),
 					libdv.WithStorage(libdv.StorageWithStorageClass(snapshotStorageClass)),
@@ -1511,7 +1509,7 @@ var _ = SIGDescribe("VirtualMachineSnapshot Tests", func() {
 				}
 			})
 
-			DescribeTable("Bug #8435 - should create a snapshot successfully", func(toRunSourceVM bool) {
+			DescribeTable("Bug #8435 - should create a snapshot successfully", decorators.StorageCritical, func(toRunSourceVM bool) {
 				if !toRunSourceVM {
 					By("Stoping the VM")
 					vm = libvmops.StopVirtualMachine(vm)

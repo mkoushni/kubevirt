@@ -37,7 +37,6 @@ import (
 	"kubevirt.io/client-go/log"
 
 	"kubevirt.io/kubevirt/pkg/instancetype/apply"
-	instancetypeErrors "kubevirt.io/kubevirt/pkg/instancetype/errors"
 	"kubevirt.io/kubevirt/pkg/instancetype/find"
 	preferenceFind "kubevirt.io/kubevirt/pkg/instancetype/preference/find"
 	"kubevirt.io/kubevirt/pkg/util"
@@ -119,7 +118,7 @@ func (h *revisionHandler) checkForInstancetypeConflicts(
 	vmiSpecCopy := vmiSpec.DeepCopy()
 	conflicts := apply.NewVMIApplier().ApplyToVMI(field.NewPath("spec", "template", "spec"), instancetypeSpec, nil, vmiSpecCopy, vmiMetadata)
 	if len(conflicts) > 0 {
-		return fmt.Errorf(instancetypeErrors.VMFieldsConflictsErrorFmt, conflicts.String())
+		return conflicts
 	}
 	return nil
 }
@@ -141,13 +140,13 @@ func (h *revisionHandler) storePreferenceRevision(vm *virtv1.VirtualMachine) (*a
 func (h *revisionHandler) createPreferenceRevision(vm *virtv1.VirtualMachine) (*appsv1.ControllerRevision, error) {
 	switch strings.ToLower(vm.Spec.Preference.Kind) {
 	case api.SingularPreferenceResourceName, api.PluralPreferenceResourceName:
-		preference, err := preferenceFind.NewPreferenceFinder(h.preferenceStore, h.virtClient).Find(vm)
+		preference, err := preferenceFind.NewPreferenceFinder(h.preferenceStore, h.virtClient).FindPreference(vm)
 		if err != nil {
 			return nil, err
 		}
 		return h.storeControllerRevision(vm, preference)
 	case api.ClusterSingularPreferenceResourceName, api.ClusterPluralPreferenceResourceName:
-		clusterPreference, err := preferenceFind.NewClusterPreferenceFinder(h.clusterPreferenceStore, h.virtClient).Find(vm)
+		clusterPreference, err := preferenceFind.NewClusterPreferenceFinder(h.clusterPreferenceStore, h.virtClient).FindPreference(vm)
 		if err != nil {
 			return nil, err
 		}

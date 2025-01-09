@@ -243,7 +243,7 @@ var _ = SIGDescribe("Storage", func() {
 			}
 
 			Context("should be successfully", func() {
-				DescribeTable("started", func(newVMI VMICreationFunc, imageOwnedByQEMU bool) {
+				DescribeTable("started", decorators.Conformance, func(newVMI VMICreationFunc, imageOwnedByQEMU bool) {
 					pvcName := diskAlpineHostPath
 					if !imageOwnedByQEMU {
 						// Setup hostpath PV that points at non-root owned image with chmod 640
@@ -395,7 +395,7 @@ var _ = SIGDescribe("Storage", func() {
 				})
 
 				// The following case is mostly similar to the alpine PVC test above, except using different VirtualMachineInstance.
-				It("[test_id:3136]started with Ephemeral PVC", func() {
+				It("[test_id:3136]started with Ephemeral PVC", decorators.Conformance, func() {
 					pvName = diskAlpineHostPath
 
 					vmi = libvmi.New(
@@ -884,7 +884,7 @@ var _ = SIGDescribe("Storage", func() {
 			})
 		})
 
-		Context("[rfe_id:2288][crit:high][vendor:cnv-qe@redhat.com][level:component][storage-req] With Cirros BlockMode PVC", decorators.StorageReq, func() {
+		Context("[rfe_id:2288][crit:high][vendor:cnv-qe@redhat.com][level:component][storage-req] With Cirros BlockMode PVC", decorators.RequiresBlockStorage, decorators.StorageReq, func() {
 			var dataVolume *cdiv1.DataVolume
 			var err error
 
@@ -892,7 +892,7 @@ var _ = SIGDescribe("Storage", func() {
 				// create a new PV and PVC (PVs can't be reused)
 				sc, foundSC := libstorage.GetBlockStorageClass(k8sv1.ReadWriteOnce)
 				if !foundSC {
-					Skip("Skip test when Block storage is not present")
+					Fail("Fail test when Block storage is not present")
 				}
 
 				dataVolume = libdv.NewDataVolume(
@@ -920,13 +920,13 @@ var _ = SIGDescribe("Storage", func() {
 			})
 		})
 
-		Context("[storage-req][rfe_id:2288][crit:high][vendor:cnv-qe@redhat.com][level:component]With Alpine block volume PVC", decorators.StorageReq, func() {
+		Context("[storage-req][rfe_id:2288][crit:high][vendor:cnv-qe@redhat.com][level:component]With Alpine block volume PVC", decorators.RequiresRWXBlock, decorators.StorageReq, func() {
 
 			It("[test_id:3139]should be successfully started", func() {
 				By("Create a VMIWithPVC")
 				sc, exists := libstorage.GetRWXBlockStorageClass()
 				if !exists {
-					Skip("Skip test when Block storage is not present")
+					Fail("Fail test when Block storage is not present")
 				}
 
 				// Start the VirtualMachineInstance with the PVC attached
@@ -950,7 +950,7 @@ var _ = SIGDescribe("Storage", func() {
 			})
 		})
 
-		Context("[rfe_id:2288][crit:high][arm64][vendor:cnv-qe@redhat.com][level:component] With not existing PVC", decorators.WgS390x, func() {
+		Context("[rfe_id:2288][crit:high][vendor:cnv-qe@redhat.com][level:component] With not existing PVC", decorators.WgS390x, decorators.WgArm64, func() {
 			// Not a candidate for NFS because the PVC in question doesn't actually exist
 			It("[test_id:1040] should get unschedulable condition", func() {
 				// Start the VirtualMachineInstance
@@ -1045,14 +1045,14 @@ var _ = SIGDescribe("Storage", func() {
 
 		})
 
-		Context("[storage-req] With a volumeMode block backed ephemeral disk", decorators.StorageReq, func() {
+		Context("[storage-req] With a volumeMode block backed ephemeral disk", decorators.RequiresBlockStorage, decorators.StorageReq, func() {
 			var dataVolume *cdiv1.DataVolume
 			var err error
 
 			BeforeEach(func() {
 				sc, foundSC := libstorage.GetBlockStorageClass(k8sv1.ReadWriteOnce)
 				if !foundSC {
-					Skip("Skip test when Block storage is not present")
+					Fail("Fail test when Block storage is not present")
 				}
 
 				dataVolume = libdv.NewDataVolume(
@@ -1090,7 +1090,7 @@ var _ = SIGDescribe("Storage", func() {
 			BeforeEach(func() {
 				sc, exists := libstorage.GetRWOFileSystemStorageClass()
 				if !exists {
-					Skip("Skip test when Filesystem storage is not present")
+					Fail("Fail test when Filesystem storage is not present")
 				}
 
 				dv = libdv.NewDataVolume(
