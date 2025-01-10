@@ -3,11 +3,15 @@ package decorators
 import . "github.com/onsi/ginkgo/v2"
 
 var (
-	Quarantine  = Label("QUARANTINE")
+	Quarantine = Label("QUARANTINE")
+
+	// Periodic marks tests that must run on periodic lanes only
+	// See https://github.com/kubevirt/kubevirt/pull/12594
 	Periodic    = Label("PERIODIC")
 	Conformance = Label("conformance")
 
-	// SIGs
+	/* SIGs */
+
 	SigCompute           = Label("sig-compute")
 	SigOperator          = Label("sig-operator")
 	SigNetwork           = Label("sig-network")
@@ -17,7 +21,8 @@ var (
 	SigMonitoring        = Label("sig-monitoring")
 	SigPerformance       = Label("sig-performance")
 
-	// HW
+	/* HW */
+
 	GPU         = Label("GPU")
 	VGPU        = Label("VGPU")
 	SEV         = Label("SEV")
@@ -30,11 +35,13 @@ var (
 	KSMRequired = Label("KSM-required")
 	ACPI        = Label("ACPI")
 
-	// Deployment
+	/* Deployment */
+
 	SingleReplica = Label("single-replica")
 	MultiReplica  = Label("multi-replica")
 
-	// Features
+	/* Features */
+
 	CPUModel                             = Label("cpumodel")
 	VSOCK                                = Label("vsock")
 	VirtioFS                             = Label("virtiofs")
@@ -67,26 +74,31 @@ var (
 	RequiresHugepages1Gi                 = Label("requireHugepages1Gi")
 	BlockRWO                             = Label("blockrwo")
 
-	// Storage classes
-	// Requires a storage class with support for snapshots
+	/* Storage classes */
+
+	// RequiresSnapshotStorageClass marks tests requiring a storage class with support for snapshots
 	RequiresSnapshotStorageClass = Label("RequiresSnapshotStorageClass")
-	// Requires a storage class without support for snapshots
+	// RequiresNoSnapshotStorageClass marks tests requiring a storage class without support for snapshots
 	RequiresNoSnapshotStorageClass = Label("RequiresNoSnapshotStorageClass")
-	// Requires a storage class with ReadWriteMany Block support
+	// RequiresRWXBlock marks tests requiring a storage class with ReadWriteMany Block support
 	RequiresRWXBlock = Label("RequiresRWXBlock")
-	// Requires a storage class with Block storage support
+	// RequiresBlockStorage marks tests requiring a storage class with Block storage support
 	RequiresBlockStorage = Label("RequiresBlockStorage")
-	// Tests that ensure sig-storage functionality which are conformance-unready
+	// StorageCritical marks tests that ensure sig-storage functionality which are conformance-unready
 	StorageCritical = Label("StorageCritical")
-	// Kubernetes versions
+
+	/* Kubernetes versions */
+
 	Kubernetes130 = Label("kubernetes130")
-	// WG archs
+
+	/* architecture working groups */
+
 	WgS390x = Label("wg-s390x")
 	WgArm64 = Label("wg-arm64")
 	// Virtctl related tests
 	Virtctl = Label("virtctl")
 
-	// NoFlakeChecker decorates tests that are not compatible with the check-tests-for-flakes test lane.
+	// NoFlakeCheck decorates tests that are not compatible with the check-tests-for-flakes test lane.
 	// This should only be used for legitimate purposes, like on tests that have a flake-checker-friendly clone.
 	NoFlakeCheck = Label("no-flake-check")
 )
