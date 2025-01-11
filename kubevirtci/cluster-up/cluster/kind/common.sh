@@ -288,6 +288,9 @@ function _add_kubeadm_cpu_manager_config_patch() {
     cat << EOF >> ${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/kind.yaml
   kubeadmConfigPatches:
   - |-
+    kind: KubeletConfiguration
+    topologyManagerPolicy: restricted
+    ---
     kind: JoinConfiguration
     nodeRegistration:
       kubeletExtraArgs:
@@ -324,6 +327,14 @@ kubeadmConfigPatches:
       dataDir: $ETCD_IN_MEMORY_DATA_DIR
 EOF
         echo "KIND cluster etcd data will be mounted to RAM on kind nodes: $ETCD_IN_MEMORY_DATA_DIR"
+    fi
+    if [[ -n "$CONFIG_TOPOLOGY_MANAGER_POLICY" ]]; then
+          cat <<EOF >> ${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/kind.yaml
+  ---
+  kind: KubeletConfiguration
+  topologyManagerPolicy: ${CONFIG_TOPOLOGY_MANAGER_POLICY}
+  ---
+EOF
     fi
 }
 
