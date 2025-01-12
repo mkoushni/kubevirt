@@ -80,6 +80,14 @@ const (
 	// InstancetypeReferencePolicy allows a cluster admin to control how a VirtualMachine references instance types and preferences
 	// through the kv.spec.configuration.instancetype.referencePolicy configurable.
 	InstancetypeReferencePolicy = "InstancetypeReferencePolicy"
+
+	// Owner: @Barakmor1
+	// Alpha: v1.4.0
+	//
+	// ImageVolume The ImageVolume FG in KubeVirt uses Kubernetes ImageVolume FG to eliminate
+	// the need for an extra container for containerDisk, improving security by avoiding
+	// bind mounts in virt-handler.
+	ImageVolume = "ImageVolume"
 )
 
 func (config *ClusterConfig) isFeatureGateEnabled(featureGate string) bool {
@@ -230,6 +238,10 @@ func (config *ClusterConfig) AlignCPUsEnabled() bool {
 
 func (config *ClusterConfig) VolumesUpdateStrategyEnabled() bool {
 	return config.isFeatureGateEnabled(VolumesUpdateStrategy)
+}
+
+func (config *ClusterConfig) ImageVolumeEnabled() bool {
+	return config.isFeatureGateEnabled(ImageVolume)
 }
 
 func (config *ClusterConfig) VolumeMigrationEnabled() bool {
