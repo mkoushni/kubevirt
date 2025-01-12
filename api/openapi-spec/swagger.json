@@ -18294,6 +18294,17 @@
      }
     }
    },
+   "v1alpha1.VirtualMachinePoolNameGeneration": {
+    "type": "object",
+    "properties": {
+     "appendIndexToConfigMapRefs": {
+      "type": "boolean"
+     },
+     "appendIndexToSecretRefs": {
+      "type": "boolean"
+     }
+    }
+   },
    "v1alpha1.VirtualMachinePoolSpec": {
     "type": "object",
     "required": [
@@ -18301,6 +18312,10 @@
      "virtualMachineTemplate"
     ],
     "properties": {
+     "nameGeneration": {
+      "description": "Options for the name generation in a pool.",
+      "$ref": "#/definitions/v1alpha1.VirtualMachinePoolNameGeneration"
+     },
      "paused": {
       "description": "Indicates that the pool is paused.",
       "type": "boolean"
