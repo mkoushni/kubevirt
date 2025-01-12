@@ -4,5 +4,6 @@ reviewers:
   - lyarwood
 approvers:
   - 0xFelix
+  - fossedihelm
 labels:
   - area/virtctl
