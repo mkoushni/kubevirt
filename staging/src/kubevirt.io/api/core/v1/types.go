@@ -1631,6 +1631,9 @@ const (
 	// VirtualMachineStatusDataVolumeError indicates that an error has been reported by one of the DataVolumes
 	// referenced by the virtual machines.
 	VirtualMachineStatusDataVolumeError VirtualMachinePrintableStatus = "DataVolumeError"
+	// VirtualMachineStatusDataVolumeExceededQuota indicates that some PersistentVolumeClaims creation was
+	// forbidden as it exceeded quota.
+	VirtualMachineStatusDataVolumeExceededQuota VirtualMachinePrintableStatus = "DataVolumeExceededQuota"
 	// VirtualMachineStatusWaitingForVolumeBinding indicates that some PersistentVolumeClaims backing
 	// the virtual machine volume are still not bound.
 	VirtualMachineStatusWaitingForVolumeBinding VirtualMachinePrintableStatus = "WaitingForVolumeBinding"
