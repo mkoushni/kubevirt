@@ -264,7 +264,7 @@ var _ = Describe("Validating VirtualMachineSnapshot Admitter", func() {
 				Expect(resp.Result.Details.Causes[0].Field).To(Equal("spec.source.apiGroup"))
 			})
 
-			It("should reject persistent storage", func() {
+			DescribeTable("should accept persistent storage with both offline and online snapshot", func(runStrategy v1.VirtualMachineRunStrategy) {
 				vm.Spec.Template = &v1.VirtualMachineInstanceTemplateSpec{
 					Spec: v1.VirtualMachineInstanceSpec{
 						Domain: v1.DomainSpec{
@@ -276,6 +276,7 @@ var _ = Describe("Validating VirtualMachineSnapshot Admitter", func() {
 						},
 					},
 				}
+				vm.Spec.RunStrategy = pointer.P(runStrategy)
 				snapshot := &snapshotv1.VirtualMachineSnapshot{
 					Spec: snapshotv1.VirtualMachineSnapshotSpec{
 						Source: corev1.TypedLocalObjectReference{
@@ -288,11 +289,11 @@ var _ = Describe("Validating VirtualMachineSnapshot Admitter", func() {
 
 				ar := createSnapshotAdmissionReview(snapshot)
 				resp := createTestVMSnapshotAdmitter(config, vm).Admit(context.Background(), ar)
-				Expect(resp.Allowed).To(BeFalse())
-				Expect(resp.Result.Details.Causes).To(HaveLen(1))
-				Expect(resp.Result.Details.Causes[0].Field).To(Equal("spec.source.name"))
-				Expect(resp.Result.Details.Causes[0].Message).To(ContainSubstring("needs backend storage"))
-			})
+				Expect(resp.Allowed).To(BeTrue())
+			},
+				Entry("when VM is running", v1.RunStrategyAlways),
+				Entry("when VM is halted", v1.RunStrategyHalted),
+			)
 
 			It("should accept when VM is not running", func() {
 				snapshot := &snapshotv1.VirtualMachineSnapshot{

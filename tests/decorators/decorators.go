@@ -48,6 +48,7 @@ var (
 	ExcludeNativeSSH                     = Label("exclude-native-ssh")
 	Reenlightenment                      = Label("Reenlightenment")
 	TscFrequencies                       = Label("TscFrequencies")
+	HostDiskGate                         = Label("HostDiskGate")
 	VMX                                  = Label("VMX")
 	Upgrade                              = Label("Upgrade")
 	CustomSELinux                        = Label("CustomSELinux")
@@ -63,6 +64,8 @@ var (
 	RequiresNodeWithCPUManager           = Label("requires-node-with-cpu-manager")
 	RequiresDualStackCluster             = Label("requires-dual-stack-cluster")
 	RequiresHugepages2Mi                 = Label("requireHugepages2Mi")
+	RequiresHugepages1Gi                 = Label("requireHugepages1Gi")
+	BlockRWO                             = Label("blockrwo")
 
 	// Storage classes
 	// Requires a storage class with support for snapshots
@@ -71,6 +74,11 @@ var (
 	RequiresNoSnapshotStorageClass = Label("RequiresNoSnapshotStorageClass")
 	// Requires a storage class with ReadWriteMany Block support
 	RequiresRWXBlock = Label("RequiresRWXBlock")
+	// Requires the VMStateStorageClass to be set to ReadWriteOnce Filesystem storage class
+	RequiresRWOFsVMStateStorageClass = Label("RequiresRWOFsVMStateStorageClass")
+	// Requires the VMStateStorageClass to be set to ReadWriteMany Filesystem storage class
+	RequiresRWXFsVMStateStorageClass = Label("RequiresRWXFsVMStateStorageClass")
+
 	// Requires a storage class with Block storage support
 	RequiresBlockStorage = Label("RequiresBlockStorage")
 	// Tests that ensure sig-storage functionality which are conformance-unready
