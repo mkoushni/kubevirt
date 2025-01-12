@@ -755,6 +755,10 @@ func (c *Controller) createTargetPod(migration *virtv1.VirtualMachineInstanceMig
 		if err != nil {
 			return err
 		}
+
+		if machineType := vmi.Spec.Domain.Machine.Type; machineType != "" {
+			prepareNodeSelectorForMachineType(machineType, templatePod)
+		}
 	}
 
 	matchLevelOnTarget := c.clusterConfig.GetMigrationConfiguration().MatchSELinuxLevelOnMigration
@@ -2092,6 +2096,11 @@ func prepareNodeSelectorForHostCpuModel(node *k8sv1.Node, pod *k8sv1.Pod, source
 	}
 
 	return nil
+}
+
+func prepareNodeSelectorForMachineType(machineType string, sourcePod *k8sv1.Pod) {
+	machineTypeLabelKey := virtv1.SupportedMachineTypeLabel + machineType
+	sourcePod.Spec.NodeSelector[machineTypeLabelKey] = ""
 }
 
 func isNodeSuitableForHostModelMigration(node *k8sv1.Node, requiredNodeLabels map[string]string) bool {
