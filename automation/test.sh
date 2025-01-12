@@ -482,6 +482,11 @@ if [[ -z ${KUBEVIRT_E2E_FOCUS} && -z ${KUBEVIRT_E2E_SKIP} && -z ${label_filter} 
     add_to_label_filter "(!Sysprep)" "&&"
   fi
 
+  if [[ ${KUBEVIRT_STORAGE} == "rook-ceph-default" ]]; then
+    # ceph block doesn't do RWX FS
+    add_to_label_filter '(!RequiresRWXFsVMStateStorageClass)' '&&'
+  fi
+
 fi
 
 # No lane currently supports loading a custom policy
