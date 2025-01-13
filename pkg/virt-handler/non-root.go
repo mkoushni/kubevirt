@@ -124,7 +124,7 @@ func getTapDevices(vmi *v1.VirtualMachineInstance, networkBindings map[string]v1
 		_, isTapNetwork := tapNetworks[net.Name]
 		if podInterfaceName, exists := networkNameScheme[net.Name]; isTapNetwork && exists {
 			tapDevices[net.Name] = podInterfaceName
-		} else if isTapNetwork && !exists {
+		} else if isTapNetwork {
 			return nil, fmt.Errorf("network %q not found in naming scheme: this should never happen", net.Name)
 		}
 	}
